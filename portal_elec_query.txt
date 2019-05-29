@@ -25,7 +25,7 @@ from
 	join
 		meter_mpanmetergroup mmg
 		on msn.mpan_meter_group_id = mmg.id
-	join
+	left join
 		meter_mpanmeterreading mmr
 		on mm.id = mmr.meter_id
 	join

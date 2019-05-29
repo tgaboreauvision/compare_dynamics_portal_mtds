@@ -19,10 +19,13 @@ class db_builder():
                                                     user=self.user,
                                                     host=self.host,
                                                     password=self.password)
-        self.built_target_conn = psycopg2.connect(dbname=self.target_dbname,
-                                                  user=self.user,
-                                                  host=self.host,
-                                                  password=self.password)
+        try:
+            self.built_target_conn = psycopg2.connect(dbname=self.target_dbname,
+                                                      user=self.user,
+                                                      host=self.host,
+                                                      password=self.password)
+        except psycopg2.OperationalError:
+            pass
         self.source_conns = {}
         self.dynamics = Odata(sandbox=False, odata_username=settings.odata_username,
                               odata_password=settings.odata_userpassword)
@@ -38,6 +41,10 @@ class db_builder():
             cur.execute(f"CREATE DATABASE {self.target_dbname};")
         except psycopg2.ProgrammingError:
             print('DB already exists - Skipping creation')
+        self.built_target_conn = psycopg2.connect(dbname=self.target_dbname,
+                                                  user=self.user,
+                                                  host=self.host,
+                                                  password=self.password)
         print(cur.statusmessage)
 
     def add_source_conn(self, conn_name, flavour, host=None, user=None, dsn=None, dbname=None,

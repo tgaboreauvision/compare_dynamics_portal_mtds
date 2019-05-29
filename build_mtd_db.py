@@ -47,6 +47,6 @@ new_db.add_table('registers',
                  entity='d4e_registers')
 
 
-# new_db.add_view('dynamics_elec_mtds', open('dynamics_elec_mtds.txt', 'r').read())
+new_db.add_view('dynamics_elec_mtds', open('dynamics_elec_mtds.txt', 'r').read())
 new_db.add_view('dynamics_gas_mtds', open('dynamics_gas_mtds.txt', 'r').read())
 

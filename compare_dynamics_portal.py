@@ -58,10 +58,21 @@ def write_csv(filename, data, fieldnames=None):
             for key in row:
                 if key not in fieldnames:
                     fieldnames.append(key)
-    with open(filename, 'w', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(data)
+    try:
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(data)
+    except IOError:
+        action = input('Target file is open, what should i do?: ')
+        if action.lower() == 'skip':
+            print(f'Skipping file: {filename}')
+            return None
+        elif action.lower() == 'rename':
+            write_csv(f'copy_{filename}', data, fieldnames=fieldnames)
+        elif action == 'retry':
+            write_csv(filename, data, fieldnames=fieldnames)
+
 
 
 write_csv(os.path.join(settings.output_path, 'full_comparison.csv'),

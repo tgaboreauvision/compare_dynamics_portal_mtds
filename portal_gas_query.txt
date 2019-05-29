@@ -15,7 +15,7 @@ from
 	join
 		meter_mprnmetergroup mmg
 		on msn.mprn_meter_group_id = mmg.id
-	join
+	left join
 		meter_mprnmeterreading mmr
 		on mm.id = mmr.meter_id
 group by

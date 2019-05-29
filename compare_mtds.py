@@ -84,8 +84,7 @@ class RegisterComparison:
                 if portal_register_count == register_match_count:
                     if self.in_dynamics and self.in_portal:
                         if len(self.portal_rows) > 1:
-                            for row in self.portal_rows:
-                                output_records['duplicate_portal_registers'].append(row)
+                            output_records['duplicate_portal_registers'].append(self.dynamics_rows[i])
                         elif self.match_fixed:
                             output_records['update_leading_0'].append(self.update_register_id())
                         elif self.dynamics_rows[0]['d4e_timepatternregime'] != self.portal_rows[0][
@@ -152,7 +151,7 @@ class RegisterComparison:
             'meter_type': self.dynamics_rows[0]['d4e_metertype'],
             'digits': 5,
             'time_pattern_regime': tpr,
-            'is_reading': 'No',
+            'is_reading': False,
             'eac': eac
         }
         return record
