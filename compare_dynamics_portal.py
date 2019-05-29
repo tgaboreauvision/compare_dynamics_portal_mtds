@@ -4,7 +4,7 @@ from pprint import pprint
 import pandas as pd
 import settings
 from sqlalchemy import create_engine
-from compare_mtds import MpanComparison, MeterComparison, RegisterComparison
+from compare_mtds import MpanComparison
 
 engine_string = f'postgresql://postgres:{settings.postgres_target_password}@localhost:5432/{settings.postgres_target_db}'
 
