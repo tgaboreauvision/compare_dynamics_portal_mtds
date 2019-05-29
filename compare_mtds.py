@@ -2,7 +2,7 @@ from pprint import pprint
 import math
 
 class RegisterComparison:
-
+    """Class to compare data at a register level"""
     def __init__(self, meter, register_id, match_fixed=False):
         self.meter = meter
         self.register_id = register_id
@@ -14,16 +14,24 @@ class RegisterComparison:
         self.action = None
 
     def add_dynamics_row(self, row):
+        """Adds a dynamics data row to self.dynamics_data_rows"""
         self.dynamics_rows.append(row)
 
     def add_portal_row(self, row):
+        """Adds a portal data row to self.portal_data_rows"""
         self.portal_rows.append(row)
 
     def update_counts(self):
+        """Determines whether the register is in the portal by checking if the register has
+        any portal rows
+        Determines whether the register is in the dynamics by checking if the register has
+        any dynamics rows"""
         self.in_portal = True if self.portal_rows else False
         self.in_dynamics = True if self.dynamics_rows else False
 
     def output_comparison_rows(self):
+        """This function contains most of the logic for compaaring portal data against dynamics"""
+        #  create the empty lists to store output rows
         output_records = {
             'comparison': [],
             'create': [],
@@ -31,16 +39,18 @@ class RegisterComparison:
             'update_leading_0': [],
             'duplicate_portal_registers': [],
         }
+
+        #  determines the max number of rows in between portal and dynamics
+        #  this is used so that the portal rows and dynamics rows can be presented side by side
+        #  in the full comparison file. Matching rows in both systems will be presented side by side
+        #  If there is a row in one system but no matching row in the other, the row will appear
+        #  next to a blank space (see file to understand what this means)
         max_length = max(len(self.dynamics_rows), len(self.portal_rows))
         for i in range(max_length):
             record = {
                 'mpan': self.meter.mpan.mpan,
                 'serial_no': self.meter.serial_no,
                 'register_id': self.register_id,
-                # 'mpan_meter_action': self.meter.mpan.meter_action,
-                # 'meter_action': self.meter.meter_action,
-                # 'meter_register_action': self.meter.register_action,
-                # 'register_action': self.action,
             }
             try:
                 for key, value in self.dynamics_rows[i].items():
@@ -52,6 +62,7 @@ class RegisterComparison:
                     record[f'{key}_p'] = value
             except IndexError:
                 pass
+            #  determines a short description of the comparison between the systems
             if self.meter.mpan.in_portal and not self.meter.mpan.in_dynamics:
                 use_case = 'MPAN in portal but not in Dynamics'
             elif self.meter.mpan.in_dynamics and not self.meter.mpan.in_portal:
@@ -69,6 +80,9 @@ class RegisterComparison:
             if self.meter.mpan.no_s15:
                 use_case = f'No S15 {use_case}'
             record['use_case'] = use_case
+
+            #  determines a more specific summary based on the counts of the various records
+            #  associated with the MPAN
             dynamics_meter_count = self.meter.mpan.dynamics_meter_count
             portal_meter_count = self.meter.mpan.portal_meter_count
             meter_match_count = self.meter.mpan.meter_match_count
@@ -80,6 +94,11 @@ class RegisterComparison:
             record[
                 'meter_register_count'] = f'{dynamics_register_count} registers in Dynamics, {portal_register_count} registers in portal ({register_match_count} matches)'
             output_records['comparison'].append(record)
+
+            #  generates output data based on the meter counts and register counts
+            #  the logic used is if all of the meters between the systems match and all of the
+            #  existing portal registers can be matched to an existing dynamics register, then
+            #  we want to create the extra dynamics register(s) in the portal.
             if dynamics_meter_count == portal_meter_count == meter_match_count:
                 if portal_register_count == register_match_count:
                     if self.in_dynamics and self.in_portal:
@@ -94,22 +113,8 @@ class RegisterComparison:
                         output_records['create'].append(self.create_in_portal())
         return output_records
 
-    # def determine_action(self):
-    #     if self.in_portal and self.in_dynamics:
-    #         if len(self.portal_rows) > 1:
-    #             self.action = 'investigate duplicate'
-
-    #         elif self.dynamics_rows[0]['d4e_timepatternregime'] != self.portal_rows[0][
-    #             'pattern']:
-    #             self.action = 'update tpr in portal with tpr from dynamics'
-    #         else:
-    #             'do nothing'
-    #     elif self.in_portal and not self.in_dynamics:
-    #         self.action = 'deactivate in portal'
-    #     elif self.in_dynamics and not self.in_portal:
-    #         self.action = 'create in portal'
-
     def update_tpr(self):
+        """returns a record for a Time Pattern Regime update"""
         record = {
             'id': self.portal_rows[0]['id'],
             'register_id': self.portal_rows[0]['register_id'],
@@ -124,6 +129,7 @@ class RegisterComparison:
         return record
 
     def update_register_id(self):
+        """returns a record for a register_id update"""
         record = {
             'id': self.portal_rows[0]['id'],
             'register_id': self.dynamics_rows[0]['d4e_meterregisterid'],
@@ -137,6 +143,7 @@ class RegisterComparison:
         }
 
     def create_in_portal(self):
+        """returns a record to create a register in the portal"""
         eac = '0' if math.isnan(self.dynamics_rows[0]['d4e_estimatedusage']) else int(self.dynamics_rows[0]['d4e_estimatedusage'])
         try:
             tpr = self.dynamics_rows[0]['d4e_timepatternregime'].zfill(5)
@@ -183,33 +190,6 @@ class MeterComparison:
         self.in_portal = True if self.portal_register_count else False
         self.in_dynamics = True if self.dynamics_register_count else False
 
-    # def determine_register_action(self):
-    #     if self.portal_register_count == 1 and self.dynamics_register_count == 1:
-    #         if self.register_match_count == 1:
-    #             self.register_action = 'do nothing'
-    #         elif self.register_match_count == 0:
-    #             self.register_action = 'overwrite portal register with data from dynamics register'
-    #     elif self.portal_register_count == self.dynamics_register_count:
-    #         if self.portal_register_count == self.register_match_count:
-    #             self.register_action = 'do nothing'
-    #         elif self.register_match_count < self.portal_register_count:
-    #             self.register_action = 'investigate mismatched registers'
-    #     elif self.portal_register_count < self.dynamics_register_count:
-    #         self.register_action = 'create missing registers in portal'
-    #     elif self.portal_register_count > self.dynamics_register_count:
-    #         self.register_action = 'investigate extra registers in portal'
-    #
-    # def determine_action(self):
-    #     if self.in_portal and self.in_dynamics:
-    #         if self.match_fixed:
-    #             self.meter_action = 'update register id for leading 0 issue'
-    #         else:
-    #             'do nothing'
-    #     elif self.in_portal and not self.in_dynamics:
-    #         self.meter_action = 'deactivate in portal'
-    #     elif self.in_dynamics and not self.in_portal:
-    #         self.meter_action = 'create in portal'
-
     def create_in_portal(self):
         'electricity_mpan, serial_number'
         record = {
@@ -239,6 +219,8 @@ class MpanComparison:
         self.meter_action = None
 
     def check_leading_0s(self, string1, string2):
+        """checks two strings against each other
+        returns True if the strings are the same except for one having a leading 0"""
         if f'0{string1}' == string2 or f'0{string2}' == string1:
             return True
         else:
@@ -287,6 +269,8 @@ class MpanComparison:
         pointer.add_portal_row(row)
 
     def update_counts(self):
+        """Summarises the number of meters and registers against the MPAN and number of matches
+        Which can be found between the systems"""
         self.portal_meter_count = len([serial_no for serial_no, meter in self.meters.items() if
                                        any(register.portal_rows for register_id, register in
                                            meter.registers.items())])
@@ -304,20 +288,4 @@ class MpanComparison:
             for register_id, register in meter.registers.items():
                 register.update_counts()
 
-    # def determine_meter_action(self):
-    #     if self.no_s15:
-    #         self.meter_action = 'do nothing'
-    #     elif self.portal_meter_count == 1 and self.dynamics_meter_count == 1:
-    #         if self.meter_match_count == 1:
-    #             self.meter_action = 'do nothing'
-    #         elif self.meter_match_count == 0:
-    #             self.meter_action = 'overwrite portal meter with serial_no from dynamics register'
-    #     elif self.portal_meter_count == self.dynamics_meter_count:
-    #         if self.portal_meter_count == self.meter_match_count:
-    #             self.meter_action = 'do nothing'
-    #         elif self.meter_match_count < self.portal_meter_count:
-    #             self.meter_action = 'investigate mismatched meters'
-    #     elif self.portal_meter_count < self.dynamics_meter_count:
-    #         self.meter_action = 'create missing meters in portal'
-    #     elif self.portal_meter_count > self.dynamics_meter_count:
-    #         self.meter_action = 'investigate extra meters in portal'
+

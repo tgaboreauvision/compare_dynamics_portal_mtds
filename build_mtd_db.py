@@ -47,6 +47,8 @@ new_db.add_table('registers',
                  entity='d4e_registers')
 
 
+# add views - N.B. this might throw an error if views already exist, didn't manage to handle
+#  these exceptions in the limited time i had
 new_db.add_view('dynamics_elec_mtds', open('dynamics_elec_mtds.txt', 'r').read())
 new_db.add_view('dynamics_gas_mtds', open('dynamics_gas_mtds.txt', 'r').read())
 
