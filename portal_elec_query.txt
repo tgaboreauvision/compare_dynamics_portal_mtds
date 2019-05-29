@@ -1,0 +1,48 @@
+select
+	mmg.id,
+	mmg.meter_point_number,
+	msn.id,
+	msn.serial_number,
+	mm.id,
+	mm.register_id,
+	mm.multiplier,
+	mm.digits,
+	mm.is_reading,
+	mm.meter_type_id,
+	mm.time_pattern_regime_id,
+	mm.eac,
+	mm.serial_number_id,
+	tpr.pattern,
+	tpr.day_night_register_id,
+	sum(case when mmr.reliability = 100.00 then 1 else 0 end) as reads_100,
+	sum(case when mmr.reliability = 80.00 then 1 else 0 end) as reads_80,
+	sum(case when mmr.reliability = 0.00 then 1 else 0 end) as reads_0
+from
+		meter_mpanmeter mm
+	join
+		meter_mpanserialnumber msn
+		on mm.serial_number_id = msn.id
+	join
+		meter_mpanmetergroup mmg
+		on msn.mpan_meter_group_id = mmg.id
+	join
+		meter_mpanmeterreading mmr
+		on mm.id = mmr.meter_id
+	join
+		meter_mpantimepatternregime tpr
+		on mm.time_pattern_regime_id = tpr.id
+group by
+	mmg.id,
+	mmg.meter_point_number,
+	msn.id,
+	msn.serial_number,
+	mm.id,
+	mm.register_id,
+	mm.multiplier,
+	mm.digits,
+	mm.is_reading,
+	mm.meter_type_id,
+	mm.time_pattern_regime_id,
+	mm.eac,
+	tpr.pattern,
+	tpr.day_night_register_id

@@ -1,0 +1,23 @@
+select
+	esp.d4e_energy_supply_pointid,
+ 	esp.d4e_mpxn,
+ 	m.d4e_meterid,
+ 	m.d4e_serial_number,
+ 	r.d4e_registerid,
+ 	r.d4e_meterregisterid,
+ 	r.d4e_timepatternregime,
+ 	esp.statecode,
+ 	esp.statuscode
+from
+		supply_points esp
+ 	left join
+ 		meters m
+ 		on m._d4e_esp_meter_value = esp.d4e_energy_supply_pointid
+		and m.statecode <> 1
+ 	left join
+ 		registers r
+ 		on r._d4e_meterregisters_value = m.d4e_meterid
+		and r.statecode <> 1
+where
+		esp.statecode <> 1
+	 	and esp.d4e_fueltype = '493030001'

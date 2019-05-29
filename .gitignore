@@ -1,0 +1,8 @@
+venv/
+.idea/
+settings_local.py
+comparison_plus.xlsx
+create_portal_registers_initial.csv
+__pycache__/
+output/
+scapbook.pygit add.

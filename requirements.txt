@@ -1,0 +1,5 @@
+requests
+pyodbc
+pandas
+sqlalchemy
+psycopg2

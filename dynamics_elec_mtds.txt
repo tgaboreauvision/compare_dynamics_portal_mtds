@@ -1,0 +1,26 @@
+SELECT esp.d4e_energy_supply_pointid,
+    esp.d4e_mpxn,
+	esp.d4e_estimatedusage,
+    m.d4e_meterid,
+    m.d4e_serial_number,
+	m.d4e_metertype,
+    r.d4e_registerid,
+    r.d4e_meterregisterid,
+    r.d4e_timepatternregime,
+    esp.statecode,
+    esp.statuscode,
+	tpr.id as portal_tpr_id
+FROM
+		supply_points esp
+     LEFT JOIN
+	 	meters m ON m._d4e_esp_meter_value = esp.d4e_energy_supply_pointid
+		AND m.statecode <> 1
+     LEFT JOIN
+	 	registers r ON r._d4e_meterregisters_value = m.d4e_meterid
+		AND r.statecode <> 1
+	LEFT JOIN
+		portal_tprs tpr
+		on LPAD(r.d4e_timepatternregime::text, 5, '0') = tpr.pattern
+ WHERE
+ 		esp.statecode <> 1
+		AND esp.d4e_fueltype = '493030000'::bigint

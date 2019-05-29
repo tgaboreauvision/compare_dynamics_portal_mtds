@@ -1,0 +1,26 @@
+select
+	mmg.id,
+	mmg.meter_point_number,
+	msn.id,
+	msn.serial_number,
+	mm.id,
+	sum(case when mmr.reliability = 100.00 then 1 else 0 end) as reads_100,
+	sum(case when mmr.reliability = 80.00 then 1 else 0 end) as reads_80,
+	sum(case when mmr.reliability = 0.00 then 1 else 0 end) as reads_0
+from
+		meter_mprnmeter mm
+	join
+		meter_mprnserialnumber msn
+		on mm.serial_number_id = msn.id
+	join
+		meter_mprnmetergroup mmg
+		on msn.mprn_meter_group_id = mmg.id
+	join
+		meter_mprnmeterreading mmr
+		on mm.id = mmr.meter_id
+group by
+	mmg.id,
+	mmg.meter_point_number,
+	msn.id,
+	msn.serial_number,
+	mm.id
